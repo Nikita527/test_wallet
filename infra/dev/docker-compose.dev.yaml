@@ -1,0 +1,45 @@
+networks:
+  wallet:
+
+services:
+  postgres:
+    image: postgres:16.0-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=wallet
+      - POSTGRES_PASSWORD=wallet
+      - POSTGRES_DB=wallet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - wallet
+
+  app:
+    build:
+      context: ../../
+      dockerfile: compose/dev/api/Dockerfile
+    command: /start
+    environment:
+      - POSTGRES_USER=wallet
+      - POSTGRES_PASSWORD=wallet
+      - POSTGRES_DB=wallet
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql+asyncpg://wallet:wallet@postgres:5432/wallet
+      - SECRET_KEY=my-secret-key
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - ADMIN_EMAIL=admin@admin.ru
+      - ADMIN_PASSWORD=admin
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - wallet
+    restart: always
+
+volumes:
+  pgdata:
